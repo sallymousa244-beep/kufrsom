@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>تسجيل طالبة متأخرة</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .student-select {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 18px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .student-select:focus {
+            border-color: #667eea;
+        }
+
+        .student-select:disabled {
+            background: #f3f3f3;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        #successMessage {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="late-container">
+
+    <div class="form-card">
+
+        <h1>📝 تسجيل طالبة متأخرة</h1>
+
+        <p class="subtitle">
+            أدخلي بيانات الطالبة
+        </p>
+
+        <form id="lateForm">
+
+            <!-- الصف -->
+            <label for="className">
+                الصف
+            </label>
+
+            <select id="className" required>
+
+                <option value="">
+                    اختاري الصف
+                </option>
+
+                <option value="سابع أ">سابع أ</option>
+                <option value="سابع ب">سابع ب</option>
+                <option value="سابع ج">سابع ج</option>
+
+                <option value="ثامن أ">ثامن أ</option>
+                <option value="ثامن ب">ثامن ب</option>
+                <option value="ثامن ج">ثامن ج</option>
+
+                <option value="تاسع أ">تاسع أ</option>
+                <option value="تاسع ب">تاسع ب</option>
+                <option value="تاسع ج">تاسع ج</option>
+
+                <option value="عاشر أ">عاشر أ</option>
+                <option value="عاشر ب">عاشر ب</option>
+
+                <option value="اول ثانوي أ">أول ثانوي أ</option>
+                <option value="اول ثانوي ب">أول ثانوي ب</option>
+
+                <option value="توجيهي صحي أ">توجيهي صحي أ</option>
+                <option value="توجيهي صحي ب">توجيهي صحي ب</option>
+                <option value="توجيهي لغات">توجيهي لغات</option>
+                
+                <option value="عاشر تكنولوجيا">عاشر تكنولوجيا</option>
+                <option value="اول ثانوي تكنولوجيا">أول ثانوي تكنولوجيا</option>
+                <option value="توجيهي تكنولوجيا">توجيهي تكنولوجيا</option>
+
+                <option value="عاشر أعمال">عاشر أعمال</option>
+                <option value="اول ثانوي أعمال">أول ثانوي أعمال</option>
+                <option value="توجيهي إدارة اعمال">
+                    توجيهي ادارة أعمال
+                </option>
+
+            </select>
+
+
+            <!-- اسم الطالبة -->
+            <label for="studentName">
+                اسم الطالبة
+            </label>
+
+            <select
+                id="studentName"
+                class="student-select"
+                required
+                disabled
+            >
+
+                <option value="">
+                    اختاري الصف أولاً
+                </option>
+
+            </select>
+
+
+            <!-- سبب التأخير -->
+            <label for="lateReason">
+                سبب التأخير
+            </label>
+
+            <select id="lateReason">
+
+                <option value="">
+                    بدون سبب
+                </option>
+
+                <option value="المواصلات">
+                    المواصلات
+                </option>
+
+                <option value="الازدحام">
+                    الازدحام
+                </option>
+
+                <option value="ظرف عائلي">
+                    ظرف عائلي
+                </option>
+
+                <option value="أسباب أخرى">
+                    أسباب أخرى
+                </option>
+
+            </select>
+
+
+            <!-- وقت التسجيل -->
+            <label for="lateTime">
+                وقت التسجيل
+            </label>
+
+            <input
+                type="text"
+                id="lateTime"
+                readonly
+            >
+
+
+            <!-- حفظ -->
+            <button
+                type="submit"
+                id="saveButton">
+
+                💾 حفظ التأخير
+
+            </button>
+
+        </form>
+
+
+        <p id="successMessage"></p>
+
+
+        <button
+            class="back-button"
+            onclick="window.location.href='dashboard.html'">
+
+            ← الرجوع للصفحة الرئيسية
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script type="module">
+
+    import { db } from "./firebase.js";
+
+    import {
+        collection,
+        addDoc,
+        serverTimestamp,
+        query,
+        where,
+        getDocs
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+    // ========================================
+    // عناصر الصفحة
+    // ========================================
+
+    const lateForm =
+        document.getElementById("lateForm");
+
+    const classSelect =
+        document.getElementById("className");
+
+    const studentSelect =
+        document.getElementById("studentName");
+
+    const timeInput =
+        document.getElementById("lateTime");
+
+    const successMessage =
+        document.getElementById("successMessage");
+
+    const saveButton =
+        document.getElementById("saveButton");
+
+
+    console.log("الكود اشتغل ✅");
+
+
+    // ========================================
+    // تحميل الطالبات حسب الصف
+    // ========================================
+
+    classSelect.addEventListener("change", async function () {
+
+        const selectedClass =
+            classSelect.value;
+
+        console.log(
+            "الصف المختار:",
+            selectedClass
+        );
+
+
+        // تنظيف قائمة الطالبات
+        studentSelect.innerHTML = "";
+
+        // تعطيلها أثناء التحميل
+        studentSelect.disabled = true;
+
+
+        // إذا لم يتم اختيار صف
+        if (!selectedClass) {
+
+            const option =
+                document.createElement("option");
+
+            option.value = "";
+
+            option.textContent =
+                "اختاري الصف أولاً";
+
+            studentSelect.appendChild(option);
+
+            return;
+        }
+
+
+        // رسالة التحميل
+        const loadingOption =
+            document.createElement("option");
+
+        loadingOption.value = "";
+
+        loadingOption.textContent =
+            "⏳ جاري تحميل الطالبات...";
+
+        studentSelect.appendChild(
+            loadingOption
+        );
+
+
+        try {
+
+            console.log(
+                "جاري البحث في Firebase..."
+            );
+
+
+            // البحث في مجموعة students
+            // اسم حقل الصف في Firebase هو class
+            const studentsQuery =
+                query(
+                    collection(
+                        db,
+                        "students"
+                    ),
+
+                    where(
+                        "class",
+                        "==",
+                        selectedClass
+                    )
+                );
+
+
+            const snapshot =
+                await getDocs(
+                    studentsQuery
+                );
+
+
+            console.log(
+                "عدد الطالبات:",
+                snapshot.size
+            );
+
+
+            // تنظيف القائمة
+            studentSelect.innerHTML = "";
+
+
+            // الخيار الأول
+            const firstOption =
+                document.createElement("option");
+
+            firstOption.value = "";
+
+            firstOption.textContent =
+                "اختاري اسم الطالبة";
+
+            studentSelect.appendChild(
+                firstOption
+            );
+
+
+            // إذا لم توجد طالبات
+            if (snapshot.empty) {
+
+                const emptyOption =
+                    document.createElement("option");
+
+                emptyOption.value = "";
+
+                emptyOption.textContent =
+                    "لا توجد طالبات لهذا الصف";
+
+                studentSelect.appendChild(
+                    emptyOption
+                );
+
+                return;
+            }
+
+
+            // مصفوفة أسماء الطالبات
+            const students = [];
+
+
+            snapshot.forEach(
+                function (doc) {
+
+                    const data =
+                        doc.data();
+
+                    console.log(
+                        "بيانات الطالبة:",
+                        data
+                    );
+
+
+                    // اسم الطالبة موجود في name
+                    if (data.name) {
+
+                        students.push(
+                            data.name
+                        );
+
+                    }
+
+                }
+            );
+
+
+            // ترتيب الأسماء
+            students.sort(
+                function (a, b) {
+
+                    return a.localeCompare(
+                        b,
+                        "ar"
+                    );
+
+                }
+            );
+
+
+            // إضافة الأسماء للقائمة
+            students.forEach(
+                function (studentName) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        studentName;
+
+                    option.textContent =
+                        studentName;
+
+                    studentSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+
+            // تفعيل القائمة
+            studentSelect.disabled = false;
+
+
+            console.log(
+                "تم عرض الطالبات بنجاح ✅"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "خطأ في تحميل الطالبات:",
+                error
+            );
+
+
+            studentSelect.innerHTML = "";
+
+
+            const errorOption =
+                document.createElement("option");
+
+            errorOption.value = "";
+
+            errorOption.textContent =
+                "❌ حدث خطأ في تحميل الطالبات";
+
+            studentSelect.appendChild(
+                errorOption
+            );
+
+        }
+
+    });
+
+
+    // ========================================
+    // تحديث الوقت
+    // ========================================
+
+    function updateTime() {
+
+        const now =
+            new Date();
+
+        timeInput.value =
+            now.toLocaleTimeString(
+                "ar-JO"
+            );
+
+    }
+
+
+    updateTime();
+
+    setInterval(
+        updateTime,
+        1000
+    );
+
+
+    // ========================================
+    // حفظ التأخير
+    // ========================================
+
+    lateForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const className =
+                classSelect.value;
+
+
+            const studentName =
+                studentSelect.value;
+
+
+            const reason =
+                document
+                    .getElementById(
+                        "lateReason"
+                    )
+                    .value;
+
+
+            // التأكد من الصف
+            if (!className) {
+
+                alert(
+                    "⚠️ اختاري الصف أولًا"
+                );
+
+                return;
+            }
+
+
+            // التأكد من الطالبة
+            if (!studentName) {
+
+                alert(
+                    "⚠️ اختاري اسم الطالبة"
+                );
+
+                return;
+            }
+
+
+            // منع الضغط مرتين
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                "⏳ جاري الحفظ...";
+
+
+            const now =
+                new Date();
+
+
+            try {
+
+                await addDoc(
+                    collection(
+                        db,
+                        "lateRecords"
+                    ),
+                    {
+
+                        studentName:
+                            studentName,
+
+                        className:
+                            className,
+
+                        reason:
+                            reason,
+
+                        date:
+                            now.toLocaleDateString(
+                                "ar-JO"
+                            ),
+
+                        time:
+                            now.toLocaleTimeString(
+                                "ar-JO"
+                            ),
+
+                        teacher:
+                            localStorage.getItem(
+                                "username"
+                            ) || "المعلمة",
+
+                        createdAt:
+                            serverTimestamp()
+
+                    }
+                );
+
+
+                // رسالة نجاح
+                successMessage.textContent =
+                    "✅ تم تسجيل التأخير بنجاح";
+
+                successMessage.style.color =
+                    "green";
+
+
+                // إعادة النموذج
+                lateForm.reset();
+
+
+                // إعادة قائمة الطالبات
+                studentSelect.innerHTML = "";
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = "";
+
+                option.textContent =
+                    "اختاري الصف أولاً";
+
+                studentSelect.appendChild(
+                    option
+                );
+
+                studentSelect.disabled = true;
+
+
+                updateTime();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Firebase Error:",
+                    error
+                );
+
+
+                successMessage.textContent =
+                    "❌ لم يتم حفظ التأخير. تأكدي من اتصال الإنترنت وصلاحيات Firebase.";
+
+                successMessage.style.color =
+                    "red";
+
+            }
+
+
+            // إعادة زر الحفظ
+            saveButton.disabled = false;
+
+            saveButton.textContent =
+                "💾 حفظ التأخير";
+
+        }
+    );
+
+</script>
+
+
+<footer class="site-footer">
+
+    &copy; 2026 جميع الحقوق محفوظة |
+    تصميم وتطوير: سالي موسى العمرات
+
+</footer>
+
+</body>
+
+</html>

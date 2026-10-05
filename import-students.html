@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استيراد الطالبات</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 25px;
+        }
+
+        input {
+            margin: 20px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 17px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📚 استيراد أسماء الطالبات</h1>
+
+    <p>اختاري ملف CSV الذي يحتوي على أسماء الطالبات والصفوف</p>
+
+    <input type="file" id="csvFile" accept=".csv">
+
+    <br>
+
+    <button id="uploadBtn" disabled>
+        رفع الطالبات إلى Firebase
+    </button>
+
+    <div id="status"></div>
+
+</div>
+<script type="module">
+
+import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc
+}
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyATnmEdYSzUIidEXIdSEnXb2QAosqJSojk",
+    authDomain: "school-late-app.firebaseapp.com",
+    projectId: "school-late-app",
+    storageBucket: "school-late-app.firebasestorage.app",
+    messagingSenderId: "431589921658",
+    appId: "1:431589921658:web:7f1a8a3f6ffabc15d07cc3",
+    measurementId: "G-6TN7LMWPW3"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+    
+
+
+    const csvFile = document.getElementById("csvFile");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const status = document.getElementById("status");
+
+
+    let csvData = [];
+
+
+    // اختيار الملف
+    csvFile.addEventListener("change", function () {
+
+        const file = csvFile.files[0];
+
+        if (!file) {
+            uploadBtn.disabled = true;
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+
+            const text = event.target.result;
+
+            const lines = text
+                .split(/\r?\n/)
+                .filter(line => line.trim() !== "");
+
+            csvData = [];
+
+            // أول سطر عناوين
+            const headers = lines[0]
+                .split(",")
+                .map(h => h.trim().toLowerCase());
+
+
+            for (let i = 1; i < lines.length; i++) {
+
+                const values = lines[i]
+                    .split(",")
+                    .map(v => v.trim());
+
+                const student = {};
+
+                headers.forEach((header, index) => {
+                    student[header] = values[index] || "";
+                });
+
+                if (student.name) {
+                    csvData.push(student);
+                }
+            }
+
+
+            status.innerHTML =
+                `تم العثور على <strong>${csvData.length}</strong> طالبة ✅`;
+
+            uploadBtn.disabled = csvData.length === 0;
+        };
+
+
+        reader.readAsText(file, "UTF-8");
+
+    });
+
+
+    // رفع البيانات إلى Firebase
+    uploadBtn.addEventListener("click", async function () {
+
+        if (csvData.length === 0) {
+            alert("لم يتم العثور على طالبات");
+            return;
+        }
+
+        uploadBtn.disabled = true;
+
+        status.innerHTML = "⏳ جاري رفع الطالبات...";
+
+        try {
+
+            let count = 0;
+
+            for (const student of csvData) {
+
+                await addDoc(
+                    collection(db, "students"),
+                    {
+                        name: student.name,
+                        class: student.class || ""
+                    }
+                );
+
+                count++;
+
+                status.innerHTML =
+                    `⏳ تم رفع ${count} من ${csvData.length}`;
+            }
+
+
+            status.innerHTML =
+                `✅ تم رفع جميع الطالبات بنجاح!<br>
+                 عدد الطالبات: ${count}`;
+
+        } catch (error) {
+
+            console.error(error);
+
+            status.innerHTML =
+                `❌ حدث خطأ أثناء الرفع:<br>${error.message}`;
+
+            uploadBtn.disabled = false;
+        }
+
+    });
+
+</script>
+
+</body>
+</html>

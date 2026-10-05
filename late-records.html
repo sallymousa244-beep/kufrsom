@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>سجل التأخيرات</title>
+
+    <link rel="stylesheet"
+          href="records.css">
+
+</head>
+
+
+<body>
+
+
+<div class="records-container">
+
+    <div class="records-card">
+
+        <h1>📋 سجل التأخيرات</h1>
+
+        <p>
+            جميع الطالبات المتأخرات
+        </p>
+
+
+        <!-- البحث -->
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="ابحثي باسم الطالبة"
+        >
+
+
+        <!-- فلترة الصف -->
+
+        <select id="classFilter">
+
+            <option value="">
+                كل الصفوف
+            </option>
+
+            <option value="سابع أ">سابع أ</option>
+            <option value="سابع ب">سابع ب</option>
+            <option value="سابع ج">سابع ج</option>
+
+            <option value="ثامن أ">ثامن أ</option>
+            <option value="ثامن ب">ثامن ب</option>
+            <option value="ثامن ج">ثامن ج</option>
+
+            <option value="تاسع أ">تاسع أ</option>
+            <option value="تاسع ب">تاسع ب</option>
+            <option value="تاسع ج">تاسع ج</option>
+
+            <option value="عاشر أ">عاشر أ</option>
+            <option value="عاشر ب">عاشر ب</option>
+
+            <option value="أول ثانوي أ">
+                أول ثانوي أ
+            </option>
+
+            <option value="أول ثانوي ب">
+                أول ثانوي ب
+            </option>
+
+            <option value="توجيهي صحي">
+                توجيهي صحي
+            </option>
+
+            <option value="توجيهي هندسي">
+                توجيهي هندسي
+            </option>
+
+            <option value="توجيهي لغات">
+                توجيهي لغات
+            </option>
+
+            <option value="توجيهي أعمال">
+                توجيهي أعمال
+            </option>
+
+            <option value="عاشر IT">
+                عاشر IT
+            </option>
+
+            <option value="أول ثانوي IT">
+                أول ثانوي IT
+            </option>
+
+            <option value="توجيهي IT">
+                توجيهي IT
+            </option>
+
+            <option value="عاشر أعمال">
+                عاشر أعمال
+            </option>
+
+            <option value="أول ثانوي أعمال">
+                أول ثانوي أعمال
+            </option>
+
+            <option value="توجيهي BTEC أعمال">
+                توجيهي BTEC أعمال
+            </option>
+
+        </select>
+
+
+        <!-- الجدول -->
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>
+                            الطالبة
+                        </th>
+
+                        <th>
+                            الصف
+                        </th>
+
+                        <th>
+                            التاريخ
+                        </th>
+
+                        <th>
+                            الوقت
+                        </th>
+
+                        <th>
+                            السبب
+                        </th>
+
+                        <th>
+                            المعلمة
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="recordsTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <p id="noRecords">
+            لا يوجد سجلات حاليًا.
+        </p>
+
+
+        <p id="loadingMessage">
+            ⏳ جاري تحميل السجلات...
+        </p>
+
+
+        <button
+            onclick="window.location.href='dashboard.html'">
+
+            ← رجوع
+
+        </button>
+
+    </div>
+
+</div>
+
+
+
+<script type="module">
+
+    // ========================================
+    // Firebase
+    // ========================================
+
+    import { db } from "./firebase.js";
+
+
+    import {
+        collection,
+        getDocs,
+        query,
+        orderBy
+    }
+    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+    // ========================================
+    // عناصر الصفحة
+    // ========================================
+
+    const table =
+        document.getElementById(
+            "recordsTable"
+        );
+
+
+    const noRecords =
+        document.getElementById(
+            "noRecords"
+        );
+
+
+    const loadingMessage =
+        document.getElementById(
+            "loadingMessage"
+        );
+
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+
+    const classFilter =
+        document.getElementById(
+            "classFilter"
+        );
+
+
+    // جميع السجلات
+    let records = [];
+
+
+
+    // ========================================
+    // تحميل السجلات من Firebase
+    // ========================================
+
+    async function loadRecords() {
+
+        try {
+
+            loadingMessage.style.display =
+                "block";
+
+            noRecords.style.display =
+                "none";
+
+
+            console.log(
+                "جاري تحميل سجلات التأخير..."
+            );
+
+
+            const recordsQuery =
+                query(
+
+                    collection(
+                        db,
+                        "lateRecords"
+                    ),
+
+                    orderBy(
+                        "createdAt",
+                        "desc"
+                    )
+
+                );
+
+
+            const snapshot =
+                await getDocs(
+                    recordsQuery
+                );
+
+
+            console.log(
+                "عدد السجلات:",
+                snapshot.size
+            );
+
+
+            records = [];
+
+
+            snapshot.forEach(
+                function (doc) {
+
+                    const data =
+                        doc.data();
+
+
+                    records.push({
+
+                        id: doc.id,
+
+                        ...data
+
+                    });
+
+                }
+            );
+
+
+            loadingMessage.style.display =
+                "none";
+
+
+            displayRecords();
+
+
+        } catch (error) {
+
+            console.error(
+                "Firebase Error:",
+                error
+            );
+
+
+            loadingMessage.textContent =
+                "❌ حدث خطأ أثناء تحميل السجلات";
+
+
+            loadingMessage.style.color =
+                "red";
+
+        }
+
+    }
+
+
+
+    // ========================================
+    // عرض السجلات
+    // ========================================
+
+    function displayRecords() {
+
+        table.innerHTML = "";
+
+
+        const search =
+            searchInput.value
+                .trim()
+                .toLowerCase();
+
+
+        const selectedClass =
+            classFilter.value;
+
+
+        // تطبيق البحث والفلترة
+        const filtered =
+            records.filter(
+                function (record) {
+
+                    const name =
+                        String(
+                            record.studentName || ""
+                        ).toLowerCase();
+
+
+                    const className =
+                        String(
+                            record.className || ""
+                        );
+
+
+                    const matchesName =
+                        name.includes(
+                            search
+                        );
+
+
+                    const matchesClass =
+                        selectedClass === ""
+                        ||
+                        className === selectedClass;
+
+
+                    return (
+                        matchesName &&
+                        matchesClass
+                    );
+
+                }
+            );
+
+
+
+        // لا توجد نتائج
+        if (filtered.length === 0) {
+
+            noRecords.style.display =
+                "block";
+
+            return;
+
+        }
+
+
+        noRecords.style.display =
+            "none";
+
+
+
+        // إنشاء الصفوف
+        filtered.forEach(
+            function (record, index) {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td>
+                        ${record.studentName || "-"}
+                    </td>
+
+                    <td>
+                        ${record.className || "-"}
+                    </td>
+
+                    <td>
+                        ${record.date || "-"}
+                    </td>
+
+                    <td>
+                        ${record.time || "-"}
+                    </td>
+
+                    <td>
+                        ${record.reason || "-"}
+                    </td>
+
+                    <td>
+                        ${record.teacher || "-"}
+                    </td>
+
+                `;
+
+
+                table.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+
+
+    // ========================================
+    // البحث باسم الطالبة
+    // ========================================
+
+    searchInput.addEventListener(
+        "input",
+        displayRecords
+    );
+
+
+
+    // ========================================
+    // فلترة حسب الصف
+    // ========================================
+
+    classFilter.addEventListener(
+        "change",
+        displayRecords
+    );
+
+
+
+    // ========================================
+    // تشغيل تحميل السجلات
+    // ========================================
+
+    loadRecords();
+
+</script>
+
+
+
+<footer class="site-footer">
+
+    &copy; 2026 جميع الحقوق محفوظة |
+    تصميم وتطوير: سالي موسى العمرات
+
+</footer>
+
+
+</body>
+
+</html>

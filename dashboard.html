@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>لوحة المعلمة</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+
+        .stats {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat-card {
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .stat-icon {
+            font-size: 30px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 8px 0;
+        }
+
+        @media (max-width: 700px) {
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="dashboard">
+
+
+    <!-- الشريط العلوي -->
+
+    <header class="top-bar">
+
+        <div>
+
+            <h1>
+                🏫 نظام متابعة التأخير
+            </h1>
+
+            <p id="teacherName"></p>
+
+        </div>
+
+
+        
+
+    </header>
+
+
+    <!-- الترحيب -->
+
+    <section class="welcome">
+
+        <h2>
+            أهلًا وسهلًا 👋
+        </h2>
+
+        <p id="date"></p>
+
+    </section>
+
+
+    <!-- الإحصائيات -->
+
+    <div class="stats">
+
+
+        <!-- عدد الطالبات -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                👩‍🎓
+            </div>
+
+            <div
+                class="stat-number"
+                id="studentCount">
+
+                0
+
+            </div>
+
+            <div>
+                طالبات متأخرات اليوم
+            </div>
+
+        </div>
+
+
+        <!-- آخر وقت تسجيل -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🕐
+            </div>
+
+            <div
+                class="stat-number"
+                id="lastTime">
+
+                -
+
+            </div>
+
+            <div>
+                آخر وقت تسجيل
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- الأزرار الرئيسية -->
+
+    <div class="dashboard-buttons">
+
+
+        <button
+            class="main-button"
+            onclick="goToLateStudents()">
+
+            ➕
+            <br>
+
+            تسجيل طالبة متأخرة
+
+        </button>
+
+
+        <button
+            class="main-button"
+            onclick="window.location.href='late-records.html'">
+
+            📋
+            <br>
+
+            سجل التأخيرات
+
+        </button>
+
+
+        <button
+            class="main-button"
+            onclick="window.location.href='reports.html'">
+
+            📊
+            <br>
+
+            التقارير
+
+        </button>
+        <button onclick="logout()">
+            تسجيل خروج
+        </button>
+
+    </div>
+
+
+</div>
+
+
+<script type="module">
+
+/* Firebase */
+
+import { db } from "./firebase.js";
+
+import {
+    collection,
+    getDocs,
+    query,
+    orderBy
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+/* اسم المعلمة */
+
+const username =
+    localStorage.getItem("username");
+
+document.getElementById(
+    "teacherName"
+).textContent =
+    "المستخدمة: " +
+    (username || "المعلمة");
+
+
+/* التاريخ والوقت */
+
+function updateDate() {
+
+    const now =
+        new Date();
+
+    const date =
+        now.toLocaleDateString("ar-JO");
+
+    const time =
+        now.toLocaleTimeString("ar-JO");
+
+    document.getElementById(
+        "date"
+    ).textContent =
+        date +
+        " | " +
+        time;
+
+}
+
+updateDate();
+
+setInterval(
+    updateDate,
+    1000
+);
+
+
+/* تحميل بيانات التأخير */
+
+async function loadDashboard() {
+
+    try {
+
+        const recordsQuery =
+            query(
+
+                collection(
+                    db,
+                    "lateRecords"
+                ),
+
+                orderBy(
+                    "createdAt",
+                    "desc"
+                )
+
+            );
+
+
+        const snapshot =
+            await getDocs(
+                recordsQuery
+            );
+
+
+        const records = [];
+
+
+        snapshot.forEach(
+            doc => {
+
+                records.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+
+            }
+        );
+
+
+        /* تاريخ اليوم */
+
+        const today =
+            new Date()
+                .toLocaleDateString(
+                    "ar-JO"
+                );
+
+
+        /* سجلات اليوم */
+
+        const todayRecords =
+            records.filter(
+                record =>
+                    record.date === today
+            );
+
+
+        /* عدد الطالبات المختلفات */
+
+        const students =
+            new Set();
+
+
+        todayRecords.forEach(
+            record => {
+
+                if (
+                    record.studentName
+                ) {
+
+                    students.add(
+                        record.studentName
+                    );
+
+                }
+
+            }
+        );
+
+
+        document.getElementById(
+            "studentCount"
+        ).textContent =
+            students.size;
+
+
+        /* آخر وقت تسجيل */
+
+        if (records.length > 0) {
+
+            document.getElementById(
+                "lastTime"
+            ).textContent =
+                records[0].time || "-";
+
+        } else {
+
+            document.getElementById(
+                "lastTime"
+            ).textContent =
+                "-";
+
+        }
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard Firebase Error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* تسجيل خروج */
+
+window.logout =
+    function () {
+
+        localStorage.removeItem(
+            "username"
+        );
+
+        window.location.href =
+            "index.html";
+
+    };
+
+
+/* تسجيل طالبة */
+
+window.goToLateStudents =
+    function () {
+
+        window.location.href =
+            "late-student.html";
+
+    };
+
+
+/* تشغيل */
+
+loadDashboard();
+
+</script>
+<footer class="site-footer">
+    &copy; 2026 جميع الحقوق محفوظة | تصميم وتطوير: سالي موسى العمرات
+</footer>
+
+</body>
+
+</html>

@@ -1,0 +1,195 @@
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: #f3f5fb;
+
+    color: #333;
+}
+
+.records-container {
+    min-height: 100vh;
+
+    padding: 30px 15px;
+}
+
+.records-card {
+    width: 100%;
+
+    max-width: 1200px;
+
+    margin: auto;
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.records-card h1 {
+    text-align: center;
+
+    margin-top: 0;
+
+    color: #4f46a5;
+}
+
+.records-card > p {
+    text-align: center;
+
+    color: #777;
+
+    margin-bottom: 30px;
+}
+
+
+/* البحث والصف */
+
+#searchInput,
+#classFilter {
+    width: 100%;
+
+    padding: 14px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+
+    outline: none;
+
+    background: white;
+}
+
+#searchInput {
+    margin-bottom: 12px;
+}
+
+#searchInput:focus,
+#classFilter:focus {
+    border-color: #667eea;
+}
+
+
+/* الجدول */
+
+.table-container {
+    width: 100%;
+
+    overflow-x: auto;
+
+    margin-top: 25px;
+}
+
+table {
+    width: 100%;
+
+    min-width: 850px;
+
+    border-collapse: collapse;
+}
+
+thead {
+    background: #667eea;
+
+    color: white;
+}
+
+th,
+td {
+    padding: 14px 12px;
+
+    text-align: center;
+
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    font-weight: bold;
+}
+
+tbody tr:hover {
+    background: #f7f7ff;
+}
+
+
+/* لا يوجد سجلات */
+
+#noRecords {
+    text-align: center;
+
+    color: #888;
+
+    padding: 25px;
+}
+
+
+/* الأزرار */
+
+.records-card button {
+    border: none;
+
+    background: #667eea;
+
+    color: white;
+
+    padding: 13px 22px;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+
+    cursor: pointer;
+
+    margin-top: 20px;
+}
+
+.records-card button:hover {
+    background: #555fd1;
+}
+
+
+/* الموبايل */
+
+@media (max-width: 600px) {
+
+    .records-container {
+        padding: 15px 10px;
+    }
+
+    .records-card {
+        padding: 18px 12px;
+
+        border-radius: 15px;
+    }
+
+    .records-card h1 {
+        font-size: 24px;
+    }
+
+    th,
+    td {
+        padding: 10px 8px;
+
+        font-size: 14px;
+    }
+
+}
+.site-footer {
+    width: 100%;
+    text-align: center;
+    padding: 15px 10px;
+    margin-top: auto;
+    color: #030303;
+    font-size: 14px;
+}

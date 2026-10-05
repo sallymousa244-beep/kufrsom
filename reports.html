@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>تقارير التأخير</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5fb;
+            color: #333;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1100px;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4f46a5;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #4f46a5;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat {
+            background: #f5f5ff;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 700px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f8f8ff;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #667eea;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555fd1;
+        }
+
+        .no-report {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+
+        .site-footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: #000;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                width: 94%;
+                margin: 15px auto;
+            }
+
+            .card {
+                padding: 18px;
+            }
+        }
+
+        @media print {
+
+            body {
+                background: white;
+            }
+
+            .filters,
+            .buttons,
+            .site-footer {
+                display: none;
+            }
+
+            .card {
+                box-shadow: none;
+            }
+
+            h1 {
+                color: black;
+            }
+
+            th {
+                background: #ddd !important;
+                color: black !important;
+            }
+
+        }
+
+    </style>
+
+    <!-- مكتبة Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- عنوان التقرير -->
+
+    <div class="card">
+
+        <h1>
+            📊 تقارير التأخير
+        </h1>
+
+        <div class="filters">
+
+            <!-- الشهر -->
+
+            <div>
+
+                <label for="reportMonth">
+                    📅 الشهر
+                </label>
+
+                <select id="reportMonth">
+
+                    <option value="">
+                        كل الأشهر
+                    </option>
+
+                    <option value="1">كانون الثاني</option>
+                    <option value="2">شباط</option>
+                    <option value="3">آذار</option>
+                    <option value="4">نيسان</option>
+                    <option value="5">أيار</option>
+                    <option value="6">حزيران</option>
+                    <option value="7">تموز</option>
+                    <option value="8">آب</option>
+                    <option value="9">أيلول</option>
+                    <option value="10">تشرين الأول</option>
+                    <option value="11">تشرين الثاني</option>
+                    <option value="12">كانون الأول</option>
+
+                </select>
+
+            </div>
+
+
+            <!-- التاريخ -->
+
+            <div>
+
+                <label for="reportDate">
+                    📆 تاريخ محدد
+                </label>
+
+                <input
+                    type="date"
+                    id="reportDate"
+                >
+
+            </div>
+
+
+            <!-- الصف -->
+
+            <div>
+
+                <label for="reportClass">
+                    🏫 الصف
+                </label>
+
+                <select id="reportClass">
+
+                    <option value="">
+                        كل الصفوف
+                    </option>
+
+                    <option>سابع أ</option>
+                    <option>سابع ب</option>
+                    <option>سابع ج</option>
+
+                    <option>ثامن أ</option>
+                    <option>ثامن ب</option>
+                    <option>ثامن ج</option>
+
+                    <option>تاسع أ</option>
+                    <option>تاسع ب</option>
+                    <option>تاسع ج</option>
+
+                    <option>عاشر أ</option>
+                    <option>عاشر ب</option>
+
+                    <option>أول ثانوي أ</option>
+                    <option>أول ثانوي ب</option>
+
+                    <option>توجيهي صحي</option>
+                    <option>توجيهي هندسي</option>
+                    <option>توجيهي لغات</option>
+                    <option>توجيهي أعمال</option>
+
+                    <option>عاشر IT</option>
+                    <option>أول ثانوي IT</option>
+                    <option>توجيهي IT</option>
+
+                    <option>عاشر أعمال</option>
+                    <option>أول ثانوي أعمال</option>
+
+                    <option>توجيهي BTEC أعمال</option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- الإحصائيات -->
+
+    <div class="stats">
+
+        <div class="stat">
+
+            <div class="stat-number"
+                 id="totalLate">
+                0
+            </div>
+
+            <div>
+                إجمالي التأخيرات
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-number"
+                 id="totalStudents">
+                0
+            </div>
+
+            <div>
+                عدد الطالبات المتأخرات
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-number"
+                 id="topClass">
+                -
+            </div>
+
+            <div>
+                أكثر صف فيه تأخير
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- تفاصيل التقرير -->
+
+    <div class="card">
+
+        <h2>
+            📋 تفاصيل التقرير
+        </h2>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+                        <th>اسم الطالبة</th>
+                        <th>الصف</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>السبب</th>
+                        <th>المعلمة</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="reportTable"></tbody>
+
+            </table>
+
+        </div>
+
+
+        <p id="noReport"
+           class="no-report">
+
+            لا توجد بيانات حسب الفلاتر المختارة.
+
+        </p>
+
+
+        <!-- الأزرار -->
+
+        <div class="buttons">
+
+            <button onclick="printReport()">
+                🖨️ طباعة التقرير
+            </button>
+
+            <button onclick="downloadExcel()">
+                📥 تنزيل Excel
+            </button>
+
+            <button onclick="window.location.href='dashboard.html'">
+                ← الرجوع للصفحة الرئيسية
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- الحقوق -->
+
+<footer class="site-footer">
+
+    © جميع الحقوق محفوظة
+    <br>
+    تصميم وتطوير سالي موسى العمرات
+
+</footer>
+
+
+<script>
+
+let records =
+    JSON.parse(
+        localStorage.getItem("lateRecords")
+    ) || [];
+
+
+const monthInput =
+    document.getElementById("reportMonth");
+
+const dateInput =
+    document.getElementById("reportDate");
+
+const classSelect =
+    document.getElementById("reportClass");
+
+const table =
+    document.getElementById("reportTable");
+
+const noReport =
+    document.getElementById("noReport");
+
+
+/* =========================
+   تحويل التاريخ إلى أجزاء
+========================= */
+
+function getRecordDate(record) {
+
+    if (!record.date) {
+        return null;
+    }
+
+    /*
+       التاريخ محفوظ بصيغة ar-JO
+       مثل:
+       ١٨‏/٨‏/٢٠٢٦
+    */
+
+    const numbers =
+        String(record.date)
+            .replace(/[٠-٩]/g, function(d) {
+                return "٠١٢٣٤٥٦٧٨٩".indexOf(d);
+            })
+            .replace(/[^\d/]/g, "")
+            .split("/");
+
+    if (numbers.length !== 3) {
+        return null;
+    }
+
+    return {
+        day: parseInt(numbers[0]),
+        month: parseInt(numbers[1]),
+        year: parseInt(numbers[2])
+    };
+
+}
+
+
+/* =========================
+   فلترة التقرير
+========================= */
+
+function getFilteredRecords() {
+
+    let filtered = [...records];
+
+
+    /* فلترة الشهر */
+
+    if (monthInput.value !== "") {
+
+        const selectedMonth =
+            parseInt(monthInput.value);
+
+        filtered =
+            filtered.filter(record => {
+
+                const recordDate =
+                    getRecordDate(record);
+
+                if (!recordDate) {
+                    return false;
+                }
+
+                return (
+                    recordDate.month ===
+                    selectedMonth
+                );
+
+            });
+
+    }
+
+
+    /* فلترة التاريخ المحدد */
+
+    if (dateInput.value !== "") {
+
+        const parts =
+            dateInput.value.split("-");
+
+        const selectedYear =
+            parseInt(parts[0]);
+
+        const selectedMonth =
+            parseInt(parts[1]);
+
+        const selectedDay =
+            parseInt(parts[2]);
+
+
+        filtered =
+            filtered.filter(record => {
+
+                const recordDate =
+                    getRecordDate(record);
+
+                if (!recordDate) {
+                    return false;
+                }
+
+                return (
+                    recordDate.year === selectedYear &&
+                    recordDate.month === selectedMonth &&
+                    recordDate.day === selectedDay
+                );
+
+            });
+
+    }
+
+
+    /* فلترة الصف */
+
+    if (classSelect.value !== "") {
+
+        filtered =
+            filtered.filter(record => {
+
+                return (
+                    record.className ===
+                    classSelect.value
+                );
+
+            });
+
+    }
+
+
+    return filtered;
+
+}
+
+
+/* =========================
+   تحديث التقرير
+========================= */
+
+function updateReport() {
+
+    const filtered =
+        getFilteredRecords();
+
+
+    /* إجمالي التأخيرات */
+
+    document.getElementById(
+        "totalLate"
+    ).textContent =
+        filtered.length;
+
+
+    /* عدد الطالبات المختلفات */
+
+    const uniqueStudents =
+        new Set();
+
+    filtered.forEach(record => {
+
+        if (record.studentName) {
+
+            uniqueStudents.add(
+                record.studentName
+            );
+
+        }
+
+    });
+
+
+    document.getElementById(
+        "totalStudents"
+    ).textContent =
+        uniqueStudents.size;
+
+
+    /* أكثر صف فيه تأخير */
+
+    const classCounts = {};
+
+
+    filtered.forEach(record => {
+
+        const className =
+            record.className || "غير محدد";
+
+        classCounts[className] =
+            (
+                classCounts[className] || 0
+            ) + 1;
+
+    });
+
+
+    let highestClass = "-";
+    let highestCount = 0;
+
+
+    Object.keys(classCounts)
+        .forEach(className => {
+
+            if (
+                classCounts[className]
+                >
+                highestCount
+            ) {
+
+                highestCount =
+                    classCounts[className];
+
+                highestClass =
+                    className;
+
+            }
+
+        });
+
+
+    document.getElementById(
+        "topClass"
+    ).textContent =
+        highestClass;
+
+
+    /* الجدول */
+
+    table.innerHTML = "";
+
+
+    if (filtered.length === 0) {
+
+        noReport.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    noReport.style.display =
+        "none";
+
+
+    filtered.forEach(
+        (record, index) => {
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>
+                    ${index + 1}
+                </td>
+
+                <td>
+                    ${record.studentName || "-"}
+                </td>
+
+                <td>
+                    ${record.className || "-"}
+                </td>
+
+                <td>
+                    ${record.date || "-"}
+                </td>
+
+                <td>
+                    ${record.time || "-"}
+                </td>
+
+                <td>
+                    ${record.reason || "-"}
+                </td>
+
+                <td>
+                    ${record.teacher || "-"}
+                </td>
+
+            `;
+
+
+            table.appendChild(row);
+
+        }
+    );
+
+}
+
+
+/* =========================
+   تغيير الفلاتر
+========================= */
+
+monthInput.addEventListener(
+    "change",
+    updateReport
+);
+
+dateInput.addEventListener(
+    "change",
+    updateReport
+);
+
+classSelect.addEventListener(
+    "change",
+    updateReport
+);
+
+
+/* =========================
+   طباعة التقرير
+========================= */
+
+function printReport() {
+
+    window.print();
+
+}
+
+
+/* =========================
+   تنزيل Excel
+========================= */
+
+function downloadExcel() {
+
+    const filtered =
+        getFilteredRecords();
+
+
+    if (filtered.length === 0) {
+
+        alert(
+            "لا توجد بيانات حسب الفلاتر المختارة."
+        );
+
+        return;
+
+    }
+
+
+    const excelData =
+        filtered.map(
+            (record, index) => ({
+
+                "الرقم":
+                    index + 1,
+
+                "اسم الطالبة":
+                    record.studentName || "",
+
+                "الصف":
+                    record.className || "",
+
+                "التاريخ":
+                    record.date || "",
+
+                "الوقت":
+                    record.time || "",
+
+                "سبب التأخير":
+                    record.reason || "",
+
+                "المعلمة":
+                    record.teacher || ""
+
+            })
+        );
+
+
+    const worksheet =
+        XLSX.utils.json_to_sheet(
+            excelData
+        );
+
+
+    const workbook =
+        XLSX.utils.book_new();
+
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "تقرير التأخير"
+    );
+
+
+    XLSX.writeFile(
+        workbook,
+        "تقرير_تأخير_الطالبات.xlsx"
+    );
+
+}
+
+
+/* تشغيل التقرير */
+
+updateReport();
+
+</script>
+
+</body>
+
+</html>
